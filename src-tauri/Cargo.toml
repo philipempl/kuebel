@@ -1,6 +1,6 @@
 [package]
 name = "kuebel"
-version = "0.1.0"
+version = "0.1.1"
 description = "Ein kleiner S3-Browser fuer macOS, Windows und Linux"
 authors = ["Complioty GmbH"]
 edition = "2021"
