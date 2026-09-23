@@ -25,8 +25,12 @@ demo-import:  ## Beispiel-Storages in die storages.json der App eintragen
 demo-remove:  ## Beispiel-Storages wieder entfernen
 	node scripts/create-demo-storages.mjs --remove
 
+# The update packages must be signed, otherwise tauri build fails. The key
+# lives outside the repo; in CI it comes from the secrets.
+SIGNING_KEY ?= $(HOME)/.tauri/kuebel.key
+
 build:  ## Fertige App bauen (src-tauri/target/release/bundle/)
-	npm run tauri build
+	TAURI_SIGNING_PRIVATE_KEY="$$(cat $(SIGNING_KEY))" TAURI_SIGNING_PRIVATE_KEY_PASSWORD="" npm run tauri build
 
 site:  ## Landing Page vorbereiten (assets/ -> public/)
 	npm run build:site

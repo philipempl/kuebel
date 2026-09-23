@@ -54,10 +54,10 @@ For AWS, Hetzner, MinIO, Backblaze and anything else that speaks S3.
 
 All builds are on the [releases page](https://github.com/philipempl/kuebel/releases/latest).
 
-The macOS builds are **not signed**. Clear the quarantine flag once after downloading, or Gatekeeper refuses to launch it:
+The macOS builds are **not signed**. macOS will claim the app *is damaged and can't be opened* — it is not. That is what Gatekeeper says about any unsigned app that came from the internet. Clear the quarantine flag once after downloading:
 
 ```bash
-xattr -d com.apple.quarantine "/Applications/kuebel.app"
+xattr -dr com.apple.quarantine "/Applications/kuebel.app"
 ```
 
 For signed and notarised builds, set `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD` and `APPLE_TEAM_ID` as repository secrets and pass them to `tauri-action` under `env` in the workflow.

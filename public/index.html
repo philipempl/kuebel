@@ -331,27 +331,27 @@
       <div class="plat" data-os="mac">
         <h3>macOS</h3><div class="req" data-i18n="d.mac"></div>
         <div class="files">
-          <a data-asset="aarch64\.dmg$" href="https://github.com/philipempl/kuebel/releases/latest">Apple Silicon <span>.dmg</span></a>
-          <a data-asset="x64\.dmg$" href="https://github.com/philipempl/kuebel/releases/latest">Intel <span>.dmg</span></a>
+          <a data-asset="aarch64\.dmg$" href="https://github.com/philipempl/kuebel/releases/latest/download/kuebel_aarch64.dmg">Apple Silicon <span>.dmg</span></a>
+          <a data-asset="x64\.dmg$" href="https://github.com/philipempl/kuebel/releases/latest/download/kuebel_x64.dmg">Intel <span>.dmg</span></a>
         </div>
       </div>
       <div class="plat" data-os="win">
         <h3>Windows</h3><div class="req" data-i18n="d.win"></div>
         <div class="files">
-          <a data-asset="-setup\.exe$" href="https://github.com/philipempl/kuebel/releases/latest">Installer <span>.exe</span></a>
-          <a data-asset="\.msi$" href="https://github.com/philipempl/kuebel/releases/latest">Windows Installer <span>.msi</span></a>
+          <a data-asset="-setup\.exe$" href="https://github.com/philipempl/kuebel/releases/latest/download/kuebel_x64-setup.exe">Installer <span>.exe</span></a>
+          <a data-asset="\.msi$" href="https://github.com/philipempl/kuebel/releases/latest/download/kuebel_x64.msi">Windows Installer <span>.msi</span></a>
         </div>
       </div>
       <div class="plat" data-os="linux">
         <h3>Linux</h3><div class="req">x86_64</div>
         <div class="files">
-          <a data-asset="\.AppImage$" href="https://github.com/philipempl/kuebel/releases/latest">AppImage <span>.AppImage</span></a>
-          <a data-asset="\.deb$" href="https://github.com/philipempl/kuebel/releases/latest">Debian, Ubuntu <span>.deb</span></a>
-          <a data-asset="\.rpm$" href="https://github.com/philipempl/kuebel/releases/latest">Fedora, openSUSE <span>.rpm</span></a>
+          <a data-asset="\.AppImage$" href="https://github.com/philipempl/kuebel/releases/latest/download/kuebel_amd64.AppImage">AppImage <span>.AppImage</span></a>
+          <a data-asset="\.deb$" href="https://github.com/philipempl/kuebel/releases/latest/download/kuebel_amd64.deb">Debian, Ubuntu <span>.deb</span></a>
+          <a data-asset="\.rpm$" href="https://github.com/philipempl/kuebel/releases/latest/download/kuebel_x86_64.rpm">Fedora, openSUSE <span>.rpm</span></a>
         </div>
       </div>
     </div>
-    <p class="hint"><span data-i18n="d.hint"></span> <code>xattr -d com.apple.quarantine /Applications/kuebel.app</code></p>
+    <p class="hint"><span data-i18n="d.hint"></span> <code>xattr -dr com.apple.quarantine /Applications/kuebel.app</code></p>
   </section>
 </main>
 
@@ -404,7 +404,7 @@
       "d.version": (v, d) => `Version ${v} vom ${d}. Kostenlos und quelloffen.`,
       "d.mac": "ab macOS 11",
       "d.win": "Windows 10 und 11",
-      "d.hint": "Beim ersten Start warnt macOS vor einem unbekannten Entwickler. Einmal im Terminal ausführen:",
+      "d.hint": "macOS meldet beim ersten Start, die App sei beschädigt. Ist sie nicht — das sagt Gatekeeper über jedes unsignierte Programm aus dem Netz. Einmal im Terminal ausführen:",
       "d.primary": { mac: "Für macOS laden", win: "Für Windows laden", linux: "Für Linux laden" },
       "meta.release": (v) => `${v} · Kostenlos · Open Source`,
       "foot.text": "MIT-Lizenz. Gebaut in München.",
@@ -443,7 +443,7 @@
       "d.version": (v, d) => `Version ${v}, released ${d}. Free and open source.`,
       "d.mac": "macOS 11 or later",
       "d.win": "Windows 10 and 11",
-      "d.hint": "On first launch macOS warns about an unidentified developer. Run this once in Terminal:",
+      "d.hint": "On first launch macOS claims the app is damaged. It is not — that is what Gatekeeper says about any unsigned app from the internet. Run this once in Terminal:",
       "d.primary": { mac: "Download for macOS", win: "Download for Windows", linux: "Download for Linux" },
       "meta.release": (v) => `${v} · Free · Open source`,
       "foot.text": "MIT licensed. Built in Munich.",
@@ -454,7 +454,11 @@
   const GH = "https://github.com/" + REPO;
   document.querySelectorAll(".gh-link").forEach((a) => (a.href = GH));
   document.querySelectorAll(".gh-issues").forEach((a) => (a.href = GH + "/issues"));
-  document.querySelectorAll("[data-asset]").forEach((a) => (a.href = GH + "/releases"));
+  // Release files carry no version in their names (assetNamePattern in
+  // release.yml), so every link leads straight to the download, even when the
+  // GitHub API does not answer or hits its rate limit.
+  const DL = GH + "/releases/latest/download/";
+  const FILES = { mac: "kuebel_aarch64.dmg", macIntel: "kuebel_x64.dmg", win: "kuebel_x64-setup.exe", linux: "kuebel_amd64.AppImage" };
 
   const uaData = navigator.userAgentData;
   const uaStr = navigator.userAgent || "";
@@ -475,10 +479,23 @@
   let osPattern = { mac: "aarch64\\.dmg$", win: "-setup\\.exe$", linux: "\\.AppImage$" }[os];
   if (os) document.querySelector(`.plat[data-os="${os}"]`)?.classList.add("current");
 
+  // The main button downloads the matching file right away. Without a
+  // detected system (phone, tablet) it still jumps to the list below.
+  let primaryFile = os && FILES[os];
+  function setPrimary() {
+    if (!primaryFile) return;
+    const btn = document.getElementById("primary-dl");
+    btn.href = DL + primaryFile;
+    btn.setAttribute("download", primaryFile);
+  }
+  setPrimary();
+
   function refinePattern() {
     if (os !== "mac" || !uaData || !uaData.getHighEntropyValues) return Promise.resolve();
     return uaData.getHighEntropyValues(["architecture"])
-      .then((v) => { if (v && v.architecture && v.architecture !== "arm") osPattern = "x64\\.dmg$"; })
+      .then((v) => {
+        if (v && v.architecture && v.architecture !== "arm") { osPattern = "x64\\.dmg$"; primaryFile = FILES.macIntel; setPrimary(); }
+      })
       .catch(() => {});
   }
 

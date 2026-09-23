@@ -58,10 +58,21 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signs the update packages. The public key is in tauri.conf.json
+          # under plugins.updater.pubkey.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
           releaseName: "kuebel ${{ github.ref_name }}"
           releaseBody: "Builds für macOS (Apple Silicon und Intel), Windows und Linux. macOS-Builds sind nicht signiert, siehe README."
-          releaseDraft: true
+          # No draft: neither /releases/latest/download nor the updater can see
+          # drafts, so the website downloads and latest.json would lead nowhere.
+          releaseDraft: false
           prerelease: false
+          # File names without the version, so the website can link straight to
+          # /releases/latest/download/<name>, e.g. kuebel_aarch64.dmg.
+          assetNamePattern: "[name]_[arch][setup][ext]"
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true
           args: ${{ matrix.args }}
