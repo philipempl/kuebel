@@ -150,10 +150,12 @@ pub async fn upload(
     path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let body = ByteStream::from_path(path).await?;
+    let content_type = mime_guess::from_path(key).first_or_octet_stream();
     client
         .put_object()
         .bucket(bucket)
         .key(key)
+        .content_type(content_type.essence_str())
         .body(body)
         .send()
         .await?;
