@@ -24,6 +24,11 @@ aws-sdk-s3 = "1"
 aws-credential-types = "1"
 uuid = { version = "1", features = ["v4"] }
 percent-encoding = "2"
+mime_guess = "2"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 
 
 

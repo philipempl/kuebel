@@ -13,6 +13,9 @@
   import Icon from "./lib/Icon.svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { loadThemes, applyTheme, pickInitial, themeName, type Theme } from "./lib/theme";
+  import { getVersion } from "@tauri-apps/api/app";
+  import UpdateNotice from "./lib/UpdateNotice.svelte";
+  import { updateState, checkNow, install, startUpdateChecks, type CheckResult } from "./lib/updates";
 
   let themes: Theme[] = [];
   let theme: Theme | null = null;
@@ -24,6 +27,17 @@
   }
 
   function closePopovers() { showPicker = false; showSettings = false; }
+
+  let appVersion = "";
+  let checking = false;
+  let checkResult: CheckResult | null = null;
+
+  async function onCheckUpdates() {
+    if ($updateState.status === "available") { showSettings = false; await install(); return; }
+    checking = true; checkResult = null;
+    checkResult = await checkNow();
+    checking = false;
+  }
 
   function onThemeChange(e: Event) {
     const id = (e.currentTarget as HTMLSelectElement).value;
@@ -231,6 +245,8 @@
     const initial = pickInitial(themes);
     if (initial) { theme = initial; applyTheme(initial); }
     invoke<string>("user_themes_dir").then((d) => (userThemesDir = d)).catch(() => {});
+    getVersion().then((v) => (appVersion = v)).catch(() => {});
+    startUpdateChecks();
     await listen<SearchProgress>("search-progress", (e) => (progress = e.payload));
     await loadStorages();
     const webview = getCurrentWebview();
@@ -569,6 +585,25 @@
             </select>
           </div>
 
+          <div class="popover-sep"></div>
+          <div class="update-row">
+            <span class="setting-label">{appVersion ? $t("app_version", { v: appVersion }) : ""}</span>
+            <button class="update-btn" disabled={checking || $updateState.status === "downloading" || $updateState.status === "ready"}
+              on:click={onCheckUpdates}>
+              {#if checking}{$t("update_checking")}
+              {:else if $updateState.status === "available"}{$t("update_install_version", { v: $updateState.version ?? "" })}
+              {:else}{$t("update_check")}{/if}
+            </button>
+          </div>
+          {#if checkResult && !checking}
+            <div class="update-result" class:error={checkResult.status === "error"}
+              title={checkResult.status === "error" ? checkResult.message : undefined}>
+              {#if checkResult.status === "current"}{$t("update_current")}
+              {:else if checkResult.status === "available"}{$t("update_found", { v: checkResult.version })}
+              {:else}{$t("update_check_failed")}: {checkResult.message}{/if}
+            </div>
+          {/if}
+
           {#if userThemesDir}
             <div class="popover-sep"></div>
             <div class="theme-dir" title={userThemesDir}>{userThemesDir}</div>
@@ -767,6 +802,8 @@
     <div class="drop-overlay"><div class="drop-box">{$t("drop_here")}</div></div>
   {/if}
 
+  <UpdateNotice />
+
   {#if sheet.open}
     <StorageSheet storage={sheet.storage}
       on:saved={onSheetSaved} on:deleted={onSheetDeleted}
@@ -815,6 +852,12 @@
   .setting { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 8px 8px; }
   .setting-label { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
   .setting-select { flex: 1; min-width: 0; max-width: 150px; height: 26px; padding: 0 6px; border: 1px solid var(--hairline); background: var(--input); color: var(--text); border-radius: var(--radius); font-family: inherit; font-size: 12px; }
+  .update-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 8px; }
+  .update-btn { height: 26px; padding: 0 10px; border: 1px solid var(--hairline); background: var(--surface); border-radius: var(--radius); font-size: 12px; color: var(--text); white-space: nowrap; }
+  .update-btn:hover:not(:disabled) { background: var(--hover); }
+  .update-btn:disabled { opacity: 0.5; cursor: default; }
+  .update-result { padding: 2px 8px 6px; font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .update-result.error { color: var(--danger); }
   .storage-block .section { padding: 0 10px 8px; }
   .switcher, .popover-main { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; border-radius: var(--radius); text-align: left; width: 100%; }
   .switcher { border: 1px solid var(--hairline); background: var(--surface); }
