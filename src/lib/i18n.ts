@@ -217,14 +217,16 @@ const en: Record<string, string> = {
 
 const dicts: Record<Lang, Record<string, string>> = { de, en };
 
+/// Englisch ist die Vorgabe, unabhaengig von der Systemsprache. Nur eine
+/// zuvor getroffene Wahl geht vor.
 function initial(): Lang {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "de" || saved === "en") return saved;
   } catch {
-    /* Storage gesperrt - dann entscheidet die Systemsprache. */
+    /* Storage gesperrt - dann bleibt es bei der Vorgabe. */
   }
-  return navigator.language.toLowerCase().startsWith("de") ? "de" : "en";
+  return "en";
 }
 
 export const lang = writable<Lang>(initial());

@@ -4,6 +4,11 @@
   publish = "public"
   command = "npm run build:site"
 
+[build.environment]
+  # Ohne feste Angabe waehlt Netlify irgendeine Node-Version. scripts/ nutzt
+  # Top-Level-await und node:fs/promises, das braucht mindestens 18.
+  NODE_VERSION = "20"
+
 [[headers]]
   for = "/*"
   [headers.values]
@@ -11,7 +16,19 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
+# Schriften und Zeichen aendern sich praktisch nie und tragen einen Hash im
+# Namen nicht - eine Woche Cache ist der Kompromiss.
 [[headers]]
-  for = "/app-icon.png"
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/screenshots/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*.svg"
   [headers.values]
     Cache-Control = "public, max-age=604800"

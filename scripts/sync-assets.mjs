@@ -10,6 +10,7 @@ const files = [
   "kuebel-mark-light.svg",
   "kuebel-mark-dark.svg",
   "favicon.svg",
+  "og-image.png",
   "screenshots/kuebel-de.png",
   "screenshots/kuebel-en.png",
   "fonts/IBMPlexSans-Regular.woff2",

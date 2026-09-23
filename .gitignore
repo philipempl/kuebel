@@ -8,4 +8,5 @@ src-tauri/gen/schemas
 public/fonts
 public/kuebel-mark-*.svg
 public/favicon.svg
+public/og-image.png
 public/screenshots

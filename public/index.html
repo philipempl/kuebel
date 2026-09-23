@@ -1,11 +1,82 @@
 <!doctype html>
-<html lang="de" data-theme="dark">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>kuebel</title>
-<meta name="description" content="kuebel ist ein kleiner S3-Browser für macOS, Windows und Linux. Open Source.">
+<meta name="description" content="kuebel is a small S3 browser for macOS, Windows and Linux. List and create buckets, upload, delete, search and preview files. Free and open source.">
+<link rel="canonical" href="https://kuebel.app/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+
+<meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1C1E" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="index, follow, max-image-preview:large">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="kuebel">
+<meta property="og:url" content="https://kuebel.app/">
+<meta property="og:title" content="kuebel — a small S3 browser">
+<meta property="og:description" content="Four things, done properly. List and create buckets, upload, delete, search and preview files. For AWS, Hetzner, MinIO, Backblaze and anything else that speaks S3.">
+<meta property="og:image" content="https://kuebel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="kuebel showing a bucket with folders and a file">
+<meta property="og:locale" content="en_GB">
+<meta property="og:locale:alternate" content="de_DE">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="kuebel — a small S3 browser">
+<meta name="twitter:description" content="Four things, done properly. For AWS, Hetzner, MinIO, Backblaze and anything else that speaks S3.">
+<meta name="twitter:image" content="https://kuebel.app/og-image.png">
+
+<!-- Strukturierte Daten. Suchmaschinen und Sprachmodelle lesen hieraus, was
+     kuebel ist, fuer welche Systeme es taugt und dass es kostenlos ist. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "kuebel",
+  "alternateName": "kuebel S3 browser",
+  "applicationCategory": "DeveloperApplication",
+  "applicationSubCategory": "S3 client",
+  "operatingSystem": "macOS 11+, Windows 10, Windows 11, Linux",
+  "url": "https://kuebel.app/",
+  "downloadUrl": "https://github.com/philipempl/kuebel/releases/latest",
+  "installUrl": "https://github.com/philipempl/kuebel/releases/latest",
+  "codeRepository": "https://github.com/philipempl/kuebel",
+  "programmingLanguage": ["Rust", "TypeScript", "Svelte"],
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "inLanguage": ["en", "de"],
+  "screenshot": "https://kuebel.app/screenshots/kuebel-en.png",
+  "image": "https://kuebel.app/og-image.png",
+  "description": "A small desktop S3 browser for macOS, Windows and Linux. List and create buckets, walk the path, upload, delete, search across every bucket and preview files. Works with AWS S3, Hetzner Object Storage, MinIO, Backblaze B2, Cloudflare R2 and any other S3-compatible endpoint.",
+  "featureList": [
+    "List and create buckets",
+    "Browse folders with a paginated table",
+    "Upload by drag and drop",
+    "Delete single files or whole folders",
+    "Search the current folder, or scan every bucket recursively",
+    "Preview images, PDFs and text files",
+    "Connect several S3 endpoints and switch between them",
+    "Light and dark themes, English and German interface"
+  ],
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "Complioty",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Munich",
+      "addressCountry": "DE"
+    }
+  }
+}
+</script>
 <script>
   try { document.documentElement.dataset.theme = localStorage.getItem("theme") === "light" ? "light" : "dark"; } catch (e) {}
 </script>
@@ -383,7 +454,7 @@
   const GH = "https://github.com/" + REPO;
   document.querySelectorAll(".gh-link").forEach((a) => (a.href = GH));
   document.querySelectorAll(".gh-issues").forEach((a) => (a.href = GH + "/issues"));
-  document.querySelectorAll("[data-asset]").forEach((a) => (a.href = GH + "/releases/latest"));
+  document.querySelectorAll("[data-asset]").forEach((a) => (a.href = GH + "/releases"));
 
   const uaData = navigator.userAgentData;
   const uaStr = navigator.userAgent || "";
@@ -411,7 +482,7 @@
       .catch(() => {});
   }
 
-  let lang = "de";
+  let lang = "en";
   let release = null;
   const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   const read = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -453,8 +524,9 @@
     render();
   });
 
+  // Englisch ist die Vorgabe; nur eine zuvor getroffene Wahl geht vor.
   const savedLang = read("lang");
-  lang = savedLang === "de" || savedLang === "en" ? savedLang : (/^de\b/i.test(navigator.language || "") ? "de" : "en");
+  lang = savedLang === "de" || savedLang === "en" ? savedLang : "en";
   render();
 
   refinePattern().then(() =>
@@ -464,9 +536,23 @@
       release = data;
       const assets = data.assets || [];
       const find = (p) => assets.find((a) => new RegExp(p).test(a.name));
-      document.querySelectorAll("[data-asset]").forEach((link) => { const a = find(link.dataset.asset); if (a) link.href = a.browser_download_url; });
+      const mb = (n) => (n / 1048576).toFixed(1).replace(".", lang === "de" ? "," : ".") + " MB";
+
+      document.querySelectorAll("[data-asset]").forEach((link) => {
+        const a = find(link.dataset.asset);
+        if (!a) return;
+        link.href = a.browser_download_url;
+        link.setAttribute("download", a.name);
+        const note = link.querySelector("span");
+        if (note) note.textContent = `${note.textContent.trim()} · ${mb(a.size)}`;
+      });
+
       const primary = osPattern && find(osPattern);
-      if (primary) document.getElementById("primary-dl").href = primary.browser_download_url;
+      if (primary) {
+        const btn = document.getElementById("primary-dl");
+        btn.href = primary.browser_download_url;
+        btn.setAttribute("download", primary.name);
+      }
       render();
     })
     .catch(() => {})
