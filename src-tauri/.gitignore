@@ -1,0 +1,3 @@
+# Von Cargo und Tauri erzeugt
+/target/
+/gen/schemas/

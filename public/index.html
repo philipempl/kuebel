@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>kuebel</title>
+<meta name="description" content="kuebel ist ein kleiner S3-Browser für macOS, Windows und Linux. Open Source.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>
+  try { document.documentElement.dataset.theme = localStorage.getItem("theme") === "light" ? "light" : "dark"; } catch (e) {}
+</script>
+<style>
+  :root, :root[data-theme="dark"] {
+    --page: #111112;
+    --card: #1C1C1E;
+    --card-2: #2E2E31;
+    --text: #F5F5F7;
+    --text-2: #9A9AA0;
+    --line: #3A3A3E;
+    --link: #007AFF;
+    --btn: #007AFF;
+    --btn-text: #FFFFFF;
+    --nav: rgba(17, 17, 18, 0.72);
+    --shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    /* App-Theme "Dunkel" */
+    --a-bg: #1C1C1E; --a-side: #252528; --a-surf: #2E2E31; --a-text: #F5F5F7; --a-text-2: #9A9AA0; --a-muted: #616168;
+    --a-line: #3A3A3E; --a-accent: #007AFF; --a-sel: rgba(0, 122, 255, 0.22); --a-ok: #30D158;
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    --page: #F5F5F7;
+    --card: #FFFFFF;
+    --card-2: #F5F5F7;
+    --text: #1C1C1E;
+    --text-2: #6B6B70;
+    --line: #E4E4E7;
+    --link: #007AFF;
+    --btn: #007AFF;
+    --btn-text: #FFFFFF;
+    --nav: rgba(245, 245, 247, 0.78);
+    --shadow: 0 30px 80px -24px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06);
+    /* App-Theme "Hell" */
+    --a-bg: #FFFFFF; --a-side: #F5F5F7; --a-surf: #FFFFFF; --a-text: #1C1C1E; --a-text-2: #6B6B70; --a-muted: #A8A8AD;
+    --a-line: #E4E4E7; --a-accent: #007AFF; --a-sel: rgba(0, 122, 255, 0.14); --a-ok: #34C759;
+    color-scheme: light;
+  }
+  /* IBM Plex selbst gehostet, nicht ueber Google Fonts: schneller, ohne
+     Drittanbieter-Anfrage. Systemschrift bleibt als Rueckfall. */
+  @font-face { font-family: "IBM Plex Sans"; src: url("fonts/IBMPlexSans-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "IBM Plex Sans"; src: url("fonts/IBMPlexSans-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+  @font-face { font-family: "IBM Plex Sans"; src: url("fonts/IBMPlexSans-SemiBold.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+  @font-face { font-family: "IBM Plex Mono"; src: url("fonts/IBMPlexMono-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+  :root {
+    --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    box-sizing: border-box;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: calc(64px + env(safe-area-inset-top, 0px)); scroll-behavior: smooth; }
+  *, *::before, *::after { box-sizing: inherit; }
+  body { margin: 0; background: var(--page); color: var(--text); font-family: var(--sans); font-size: 17px; line-height: 1.5; letter-spacing: -0.01em; -webkit-font-smoothing: antialiased; transition: background 250ms, color 250ms; }
+  a { color: inherit; text-decoration: none; }
+  svg { max-width: 100%; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .mark { display: block; flex-shrink: 0; width: auto; }
+  .nav .mark { height: 23px; }
+  footer .mark { height: 18px; }
+
+  /* Navigation */
+  .nav { position: sticky; top: 0; z-index: 10; padding-top: env(safe-area-inset-top, 0px); background: var(--nav); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid var(--line); }
+  .nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
+  .nav-right { display: flex; align-items: center; gap: 24px; font-size: 14px; }
+  .nav-right > a { color: var(--text-2); transition: color 150ms; }
+  .nav-right > a:hover { color: var(--text); }
+  .toggles { display: flex; gap: 6px; }
+  .toggle { font: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--text-2); background: var(--card); border: 1px solid var(--line); border-radius: 999px; height: 32px; min-width: 44px; padding: 0 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: color 150ms, border-color 150ms; }
+  .toggle:hover { color: var(--text); border-color: var(--text-2); }
+  .toggle .icon-light { display: none; }
+  :root[data-theme="light"] .toggle .icon-dark { display: none; }
+  :root[data-theme="light"] .toggle .icon-light { display: block; }
+
+  /* Hero */
+  .hero { text-align: center; padding: 88px 0 0; }
+  .hero-icon { height: 104px; width: auto; margin: 0 auto 28px; }
+  .hero h1 { font-size: clamp(44px, 8vw, 84px); line-height: 1.02; font-weight: 700; letter-spacing: -0.045em; margin: 0 auto; white-space: pre-line; }
+  .hero .lead { font-size: clamp(19px, 2.4vw, 24px); line-height: 1.4; color: var(--text-2); max-width: 30em; margin: 22px auto 0; letter-spacing: -0.02em; }
+  .cta { display: flex; gap: 22px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 36px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 50px; padding: 0 26px; border-radius: 999px; background: var(--btn); color: var(--btn-text); font-size: 17px; font-weight: 500; transition: transform 150ms, filter 150ms; }
+  .btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .link { color: var(--link); font-size: 17px; }
+  .link:hover { text-decoration: underline; }
+  .meta { margin-top: 18px; font-size: 13px; color: var(--text-2); }
+
+  /* App-Vorschau */
+  .stage { margin: 72px auto 0; max-width: 980px; }
+  .shot { display: block; width: 100%; height: auto; border-radius: 14px; box-shadow: var(--shadow); }
+
+  /* Abschnitte */
+  section { padding: 140px 0 0; }
+  .head { text-align: center; max-width: 900px; margin: 0 auto 56px; }
+  .head h2 { font-size: clamp(34px, 5vw, 56px); line-height: 1.06; font-weight: 700; letter-spacing: -0.04em; margin: 0; white-space: pre-line; }
+  .head p { font-size: clamp(18px, 2.2vw, 21px); color: var(--text-2); margin: 16px 0 0; letter-spacing: -0.02em; }
+
+  /* Bento */
+  .bento { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .tile { background: var(--card); border-radius: 22px; padding: 32px; display: flex; flex-direction: column; min-height: 260px; overflow: hidden; transition: background 250ms; }
+  .tile.wide { grid-column: span 2; }
+  .tile h3 { font-size: 24px; line-height: 1.15; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 8px; }
+  .tile p { margin: 0; color: var(--text-2); font-size: 16px; max-width: 28em; }
+  .tile .ico { width: 44px; height: 44px; border-radius: 12px; background: var(--card-2); display: flex; align-items: center; justify-content: center; margin-bottom: auto; color: var(--text); }
+  .tile .body { margin-top: 28px; }
+  .visual { flex: 1; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; min-height: 120px; }
+  .drop { width: 100%; max-width: 420px; height: 130px; border: 2px dashed var(--line); border-radius: 16px; display: flex; align-items: center; justify-content: center; gap: 14px; position: relative; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 10px; font-family: var(--mono); font-size: 13px; color: #FFFFFF; box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.35); }
+  .chip.a { background: #007AFF; transform: rotate(-4deg) translateY(-6px); }
+  .chip.b { background: #AA40FF; transform: rotate(3deg) translateY(8px); }
+  .providers { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .providers span { font-size: 13px; padding: 6px 12px; border-radius: 999px; background: var(--card-2); color: var(--text); }
+  .minis { display: flex; gap: 14px; width: 100%; max-width: 440px; }
+  .mini { flex: 1; height: 120px; border-radius: 12px; display: grid; grid-template-columns: 34% 1fr; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
+  .mini .s { border-right: 1px solid; padding: 10px 8px; display: flex; flex-direction: column; gap: 6px; }
+  .mini .c { padding: 12px 10px; display: flex; flex-direction: column; gap: 7px; }
+  .mini i { display: block; height: 6px; border-radius: 3px; }
+  .mini.l { background: #FFFFFF; } .mini.l .s { background: #F5F5F7; border-color: #E4E4E7; } .mini.l i { background: #E4E4E7; } .mini.l i.x { background: #007AFF; width: 40%; }
+  .mini.d { background: #1C1C1E; } .mini.d .s { background: #252528; border-color: #3A3A3E; } .mini.d i { background: #3A3A3E; } .mini.d i.x { background: #007AFF; width: 40%; }
+  .mini i.w { width: 70%; } .mini i.h { width: 55%; }
+
+  /* Download */
+  .platforms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .plat { background: var(--card); border-radius: 22px; padding: 28px; display: flex; flex-direction: column; gap: 6px; border: 2px solid transparent; transition: background 250ms, border-color 250ms; }
+  .plat.current { border-color: var(--btn); }
+  .plat h3 { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; margin: 0; }
+  .plat .req { font-size: 14px; color: var(--text-2); margin-bottom: 18px; }
+  .plat .files { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+  .plat .files a { display: flex; justify-content: space-between; align-items: center; height: 44px; padding: 0 16px; border-radius: 12px; background: var(--card-2); font-size: 15px; transition: filter 150ms; }
+  .plat .files a:hover { filter: brightness(1.1); }
+  .plat .files a span { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+  .plat.current .files a:first-child { background: var(--btn); color: var(--btn-text); }
+  .plat.current .files a:first-child span { color: rgba(255, 255, 255, 0.8); }
+  .hint { text-align: center; margin-top: 28px; font-size: 14px; color: var(--text-2); }
+  .hint code { font-family: var(--mono); font-size: 12.5px; background: var(--card); padding: 3px 8px; border-radius: 6px; overflow-wrap: anywhere; }
+
+  footer { margin-top: 140px; border-top: 1px solid var(--line); }
+  footer .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding-top: 28px; padding-bottom: 44px; font-size: 13px; color: var(--text-2); }
+  footer .brand { font-size: 14px; color: var(--text); }
+  footer nav { display: flex; gap: 20px; }
+  footer a:hover { color: var(--text); }
+
+  @media (max-width: 900px) {
+    .bento, .platforms { grid-template-columns: minmax(0, 1fr); }
+    .tile.wide { grid-column: auto; }
+    .tile { min-height: 0; }
+    .tile .body { margin-top: 20px; }
+    .nav-right > a { display: none; }
+    .stage { margin-top: 48px; }
+  }
+  @media (max-width: 560px) {
+    .tile { padding: 24px; }
+    .hero { padding-top: 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <img class="mark" src="kuebel-mark-dark.svg" width="23" height="24" alt="" aria-hidden="true">
+      kuebel
+    </a>
+    <div class="nav-right">
+      <a href="#features" data-i18n="nav.features"></a>
+      <a href="#download" data-i18n="nav.download"></a>
+      <a class="gh-link" href="https://github.com/philipempl/kuebel">GitHub</a>
+      <div class="toggles">
+        <button type="button" class="toggle" id="lang-toggle"><span id="lang-current">DE</span></button>
+        <button type="button" class="toggle" id="theme-toggle">
+          <svg class="icon-dark" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 9.5A5.5 5.5 0 016.5 2.5a5.5 5.5 0 107 7z"/></svg>
+          <svg class="icon-light" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="top">
+
+  <section class="hero" style="padding-top: 88px;">
+    <img class="hero-icon" src="kuebel-mark-dark.svg" alt="" aria-hidden="true">
+    <h1 data-i18n="hero.title"></h1>
+    <p class="lead" data-i18n="hero.lead"></p>
+    <div class="cta">
+      <a class="btn" id="primary-dl" href="#download">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5v8M4.5 7L8 10.5 11.5 7M3 13.5h10"/></svg>
+        <span id="primary-label"></span>
+      </a>
+      <a class="link gh-link" href="https://github.com/philipempl/kuebel"><span data-i18n="hero.github"></span> ›</a>
+    </div>
+    <div class="meta" id="meta" data-i18n="hero.meta"></div>
+
+    <div class="stage">
+      <img class="shot" src="screenshots/kuebel-de.png" width="1800" height="1179"
+        alt="" aria-hidden="true" data-i18n-alt="preview.label">
+    </div>
+
+  </section>
+
+  <section id="features">
+    <div class="head">
+      <h2 data-i18n="f.title"></h2>
+      <p data-i18n="f.sub"></p>
+    </div>
+    <div class="bento">
+      <div class="tile wide">
+        <div class="visual"><div class="drop"><span class="chip a">report.pdf</span><span class="chip b">backup.zip</span></div></div>
+        <h3 data-i18n="t.drop.t"></h3><p data-i18n="t.drop.d"></p>
+      </div>
+      <div class="tile">
+        <div class="ico"><svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg></div>
+        <div class="body"><h3 data-i18n="t.keys.t"></h3><p data-i18n="t.keys.d"></p></div>
+      </div>
+      <div class="tile">
+        <div class="ico"><svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5l1 8.5h8l1-8.5"/><ellipse cx="8" cy="4.5" rx="5" ry="1.8"/></svg></div>
+        <div class="body"><h3 data-i18n="t.prov.t"></h3><p data-i18n="t.prov.d"></p>
+          <div class="providers"><span>AWS S3</span><span>Cloudflare R2</span><span>Hetzner</span><span>MinIO</span><span>Backblaze B2</span></div>
+        </div>
+      </div>
+      <div class="tile wide">
+        <div class="visual">
+          <div class="minis">
+            <div class="mini l"><div class="s"><i class="w"></i><i class="x"></i><i class="h"></i></div><div class="c"><i class="w"></i><i></i><i class="h"></i><i class="w"></i></div></div>
+            <div class="mini d"><div class="s"><i class="w"></i><i class="x"></i><i class="h"></i></div><div class="c"><i class="w"></i><i></i><i class="h"></i><i class="w"></i></div></div>
+          </div>
+        </div>
+        <h3 data-i18n="t.theme.t"></h3><p data-i18n="t.theme.d"></p>
+      </div>
+      <div class="tile">
+        <div class="ico"><svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 4.5A1.5 1.5 0 013.5 3H6l1.5 1.5h5A1.5 1.5 0 0114 6v6.5A1.5 1.5 0 0112.5 14h-9A1.5 1.5 0 012 12.5z"/></svg></div>
+        <div class="body"><h3 data-i18n="t.nav.t"></h3><p data-i18n="t.nav.d"></p></div>
+      </div>
+      <div class="tile">
+        <div class="ico"><svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 8.5h5.6l.7-8.5"/></svg></div>
+        <div class="body"><h3 data-i18n="t.del.t"></h3><p data-i18n="t.del.d"></p></div>
+      </div>
+      <div class="tile">
+        <div class="ico"><svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5L2 8l3.5 3.5M10.5 4.5L14 8l-3.5 3.5"/></svg></div>
+        <div class="body"><h3 data-i18n="t.oss.t"></h3><p data-i18n="t.oss.d"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="download">
+    <div class="head">
+      <h2 data-i18n="d.title"></h2>
+      <p id="dl-version" data-i18n="d.sub"></p>
+    </div>
+    <div class="platforms">
+      <div class="plat" data-os="mac">
+        <h3>macOS</h3><div class="req" data-i18n="d.mac"></div>
+        <div class="files">
+          <a data-asset="aarch64\.dmg$" href="https://github.com/philipempl/kuebel/releases/latest">Apple Silicon <span>.dmg</span></a>
+          <a data-asset="x64\.dmg$" href="https://github.com/philipempl/kuebel/releases/latest">Intel <span>.dmg</span></a>
+        </div>
+      </div>
+      <div class="plat" data-os="win">
+        <h3>Windows</h3><div class="req" data-i18n="d.win"></div>
+        <div class="files">
+          <a data-asset="-setup\.exe$" href="https://github.com/philipempl/kuebel/releases/latest">Installer <span>.exe</span></a>
+          <a data-asset="\.msi$" href="https://github.com/philipempl/kuebel/releases/latest">Windows Installer <span>.msi</span></a>
+        </div>
+      </div>
+      <div class="plat" data-os="linux">
+        <h3>Linux</h3><div class="req">x86_64</div>
+        <div class="files">
+          <a data-asset="\.AppImage$" href="https://github.com/philipempl/kuebel/releases/latest">AppImage <span>.AppImage</span></a>
+          <a data-asset="\.deb$" href="https://github.com/philipempl/kuebel/releases/latest">Debian, Ubuntu <span>.deb</span></a>
+          <a data-asset="\.rpm$" href="https://github.com/philipempl/kuebel/releases/latest">Fedora, openSUSE <span>.rpm</span></a>
+        </div>
+      </div>
+    </div>
+    <p class="hint"><span data-i18n="d.hint"></span> <code>xattr -d com.apple.quarantine /Applications/kuebel.app</code></p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <img class="mark" src="kuebel-mark-dark.svg" alt="" aria-hidden="true">
+      kuebel
+    </a>
+    <span data-i18n="foot.text"></span>
+    <nav><a class="gh-link" href="https://github.com/philipempl/kuebel">GitHub</a><a class="gh-issues" href="https://github.com/philipempl/kuebel/issues" data-i18n="foot.issue"></a></nav>
+  </div>
+</footer>
+
+<script>
+  // Einzige Stelle, die beim Fork angepasst werden muss
+  const REPO = "philipempl/kuebel";
+
+  const T = {
+    de: {
+      "nav.features": "Funktionen",
+      "nav.download": "Download",
+      "lang.switch": "Sprache: Deutsch. Zu Englisch wechseln",
+      "theme.toDark": "Darstellung: Hell. Zu Dunkel wechseln",
+      "theme.toLight": "Darstellung: Dunkel. Zu Hell wechseln",
+      "hero.title": "Deine Buckets.\nEin Fenster.",
+      "hero.lead": "Dateien ansehen, hochladen und löschen. Für jeden S3-Speicher, ohne Konsole und ohne Kommandozeile.",
+      "hero.download": "Herunterladen",
+      "hero.github": "Auf GitHub ansehen",
+      "hero.meta": "Kostenlos · Open Source · macOS, Windows und Linux",
+      "preview.label": "Vorschau des kuebel-Fensters",
+      "f.title": "Alles, was du brauchst.\nNichts, was du nicht brauchst.",
+      "f.sub": "kuebel macht wenige Dinge und die richtig.",
+      "t.drop.t": "Ziehen. Ablegen. Fertig.",
+      "t.drop.d": "Dateien einfach ins Fenster ziehen. kuebel lädt sie in den Ordner, den du gerade offen hast.",
+      "t.keys.t": "Schlüssel bleiben bei dir.",
+      "t.keys.d": "Kein Konto, keine Telemetrie, kein Server dazwischen. Zugangsdaten liegen lokal in storages.json.",
+      "t.prov.t": "Jeder S3-Speicher.",
+      "t.prov.d": "Mehrere Storages anlegen und mit einem Klick wechseln.",
+      "t.theme.t": "Hell, dunkel oder deins.",
+      "t.theme.d": "kuebel folgt deinem Geschmack. Eigene Themes sind eine kleine YAML-Datei.",
+      "t.nav.t": "Navigieren wie gewohnt.",
+      "t.nav.d": "Doppelklick öffnet Ordner, die Pfadleiste führt zurück.",
+      "t.del.t": "Löschen mit Rückfrage.",
+      "t.del.d": "Einzelne Dateien oder ganze Ordner. Nie aus Versehen.",
+      "t.oss.t": "Open Source.",
+      "t.oss.d": "MIT-Lizenz. Lies den Code, forke ihn, mach ihn zu deinem.",
+      "d.title": "Für jedes System.",
+      "d.sub": "Kostenlos und quelloffen.",
+      "d.version": (v, d) => `Version ${v} vom ${d}. Kostenlos und quelloffen.`,
+      "d.mac": "ab macOS 11",
+      "d.win": "Windows 10 und 11",
+      "d.hint": "Beim ersten Start warnt macOS vor einem unbekannten Entwickler. Einmal im Terminal ausführen:",
+      "d.primary": { mac: "Für macOS laden", win: "Für Windows laden", linux: "Für Linux laden" },
+      "meta.release": (v) => `${v} · Kostenlos · Open Source`,
+      "foot.text": "MIT-Lizenz. Gebaut in München.",
+      "foot.issue": "Fehler melden",
+    },
+    en: {
+      "nav.features": "Features",
+      "nav.download": "Download",
+      "lang.switch": "Language: English. Switch to German",
+      "theme.toDark": "Appearance: light. Switch to dark",
+      "theme.toLight": "Appearance: dark. Switch to light",
+      "hero.title": "Your buckets.\nOne window.",
+      "hero.lead": "Browse, upload and delete files. For any S3 storage, without a console or command line.",
+      "hero.download": "Download",
+      "hero.github": "View on GitHub",
+      "hero.meta": "Free · Open source · macOS, Windows and Linux",
+      "preview.label": "Preview of the kuebel window",
+      "f.title": "Everything you need.\nNothing you don't.",
+      "f.sub": "kuebel does a few things, and does them well.",
+      "t.drop.t": "Drag. Drop. Done.",
+      "t.drop.d": "Drop files onto the window. kuebel uploads them to the folder you have open.",
+      "t.keys.t": "Your keys stay with you.",
+      "t.keys.d": "No account, no telemetry, no server in between. Credentials live locally in storages.json.",
+      "t.prov.t": "Any S3 storage.",
+      "t.prov.d": "Add several storages and switch with one click.",
+      "t.theme.t": "Light, dark or yours.",
+      "t.theme.d": "kuebel follows your taste. Custom themes are a small YAML file.",
+      "t.nav.t": "Navigate like you're used to.",
+      "t.nav.d": "Double-click opens a folder, the path bar takes you back.",
+      "t.del.t": "Delete with confirmation.",
+      "t.del.d": "Single files or entire folders. Never by accident.",
+      "t.oss.t": "Open source.",
+      "t.oss.d": "MIT licensed. Read the code, fork it, make it yours.",
+      "d.title": "For every system.",
+      "d.sub": "Free and open source.",
+      "d.version": (v, d) => `Version ${v}, released ${d}. Free and open source.`,
+      "d.mac": "macOS 11 or later",
+      "d.win": "Windows 10 and 11",
+      "d.hint": "On first launch macOS warns about an unidentified developer. Run this once in Terminal:",
+      "d.primary": { mac: "Download for macOS", win: "Download for Windows", linux: "Download for Linux" },
+      "meta.release": (v) => `${v} · Free · Open source`,
+      "foot.text": "MIT licensed. Built in Munich.",
+      "foot.issue": "Report an issue",
+    },
+  };
+
+  const GH = "https://github.com/" + REPO;
+  document.querySelectorAll(".gh-link").forEach((a) => (a.href = GH));
+  document.querySelectorAll(".gh-issues").forEach((a) => (a.href = GH + "/issues"));
+  document.querySelectorAll("[data-asset]").forEach((a) => (a.href = GH + "/releases/latest"));
+
+  const uaData = navigator.userAgentData;
+  const uaStr = navigator.userAgent || "";
+  const plat = (uaData && uaData.platform) || navigator.platform || uaStr;
+
+  // Android meldet sich als Linux, iPadOS als Macintosh. Fuer beide gibt es
+  // keinen Build, also lieber gar nichts hervorheben als das Falsche.
+  const mobile = /Android/i.test(uaStr) || /iPhone|iPad|iPod/i.test(uaStr) ||
+                 (uaData && uaData.mobile === true);
+  const os = mobile ? null
+    : /mac/i.test(plat) ? "mac"
+    : /win/i.test(plat) ? "win"
+    : /linux|x11/i.test(plat) ? "linux"
+    : null;
+
+  // Die Mac-Architektur verraet nur Chromium. Safari und Firefox tun es nicht,
+  // dort bleibt es bei Apple Silicon - beide Varianten stehen ohnehin unten.
+  let osPattern = { mac: "aarch64\\.dmg$", win: "-setup\\.exe$", linux: "\\.AppImage$" }[os];
+  if (os) document.querySelector(`.plat[data-os="${os}"]`)?.classList.add("current");
+
+  function refinePattern() {
+    if (os !== "mac" || !uaData || !uaData.getHighEntropyValues) return Promise.resolve();
+    return uaData.getHighEntropyValues(["architecture"])
+      .then((v) => { if (v && v.architecture && v.architecture !== "arm") osPattern = "x64\\.dmg$"; })
+      .catch(() => {});
+  }
+
+  let lang = "de";
+  let release = null;
+  const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const read = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const currentTheme = () => (document.documentElement.dataset.theme === "light" ? "light" : "dark");
+
+  function render() {
+    const t = T[lang];
+    document.documentElement.lang = lang;
+    const mark = currentTheme() === "light" ? "kuebel-mark-light.svg" : "kuebel-mark-dark.svg";
+    const shot = document.querySelector(".shot");
+    if (shot) {
+      shot.src = `screenshots/kuebel-${lang}.png`;
+      shot.alt = t[shot.dataset.i18nAlt] ?? "";
+      shot.removeAttribute("aria-hidden");
+    }
+    document.querySelectorAll(".mark, .hero-icon").forEach((el) => {
+      if (el.getAttribute("src") !== mark) el.setAttribute("src", mark);
+    });
+    document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t[el.dataset.i18n]; });
+    document.querySelectorAll("[data-i18n-label]").forEach((el) => el.setAttribute("aria-label", t[el.dataset.i18nLabel]));
+    document.getElementById("lang-current").textContent = lang.toUpperCase();
+    document.getElementById("lang-toggle").setAttribute("aria-label", t["lang.switch"]);
+    document.getElementById("theme-toggle").setAttribute("aria-label", t[currentTheme() === "dark" ? "theme.toLight" : "theme.toDark"]);
+    document.getElementById("primary-label").textContent = (os && t["d.primary"][os]) || t["hero.download"];
+    document.title = "kuebel · " + t["hero.title"].replace("\n", " ");
+    if (release) {
+      const v = release.tag_name.replace(/^v/, "");
+      const d = new Date(release.published_at).toLocaleDateString(lang === "de" ? "de-DE" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
+      document.getElementById("dl-version").textContent = t["d.version"](v, d);
+      document.getElementById("meta").textContent = t["meta.release"](release.tag_name);
+    }
+  }
+
+  document.getElementById("lang-toggle").addEventListener("click", () => { lang = lang === "de" ? "en" : "de"; store("lang", lang); render(); });
+  document.getElementById("theme-toggle").addEventListener("click", () => {
+    const next = currentTheme() === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    store("theme", next);
+    render();
+  });
+
+  const savedLang = read("lang");
+  lang = savedLang === "de" || savedLang === "en" ? savedLang : (/^de\b/i.test(navigator.language || "") ? "de" : "en");
+  render();
+
+  refinePattern().then(() =>
+  fetch("https://api.github.com/repos/" + REPO + "/releases/latest")
+    .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+    .then((data) => {
+      release = data;
+      const assets = data.assets || [];
+      const find = (p) => assets.find((a) => new RegExp(p).test(a.name));
+      document.querySelectorAll("[data-asset]").forEach((link) => { const a = find(link.dataset.asset); if (a) link.href = a.browser_download_url; });
+      const primary = osPattern && find(osPattern);
+      if (primary) document.getElementById("primary-dl").href = primary.browser_download_url;
+      render();
+    })
+    .catch(() => {})
+  );
+</script>
+</body>
+</html>

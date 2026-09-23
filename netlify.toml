@@ -1,0 +1,17 @@
+# Netlify veroeffentlicht nur das public/-Verzeichnis. Die App selbst wird hier
+# nicht gebaut - Tauri-Artefakte entstehen in der GitHub Action, nicht bei Netlify.
+[build]
+  publish = "public"
+  command = "npm run build:site"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/app-icon.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

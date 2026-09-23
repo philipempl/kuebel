@@ -1,0 +1,19 @@
+{
+  "_comment": "Beispiel-Storages fuer Entwicklung und Screenshots. Quelle fuer src/lib/demo.ts und scripts/create-demo-storages.mjs.",
+  "storages": [
+    {
+      "id": "demo-de",
+      "name": "Hetzner Falkenstein",
+      "endpoint": "https://fsn1.your-objectstorage.com",
+      "region": "fsn1",
+      "path_style": true
+    },
+    {
+      "id": "demo-en",
+      "name": "AWS Frankfurt",
+      "endpoint": "https://s3.eu-central-1.amazonaws.com",
+      "region": "eu-central-1",
+      "path_style": false
+    }
+  ]
+}

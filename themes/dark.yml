@@ -1,0 +1,33 @@
+# kuebel dunkel.
+#
+# Dieselben vier Markenfarben, Graphit als Grund. Blau ist auch hier der Akzent
+# und in beiden Modi identisch - zwei Fassungen braucht es nicht.
+id: dark
+name:
+  de: Dunkel
+  en: Dark
+appearance: dark
+
+fonts:
+  sans: '"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif'
+  mono: '"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace'
+
+colors:
+  background: "#1C1C1E"     # Graphit
+  sidebar: "#252528"
+  surface: "#2E2E31"
+  input: "#1C1C1E"
+  text: "#F5F5F7"           # Ivory
+  text_secondary: "#9A9AA0"
+  text_muted: "#616168"
+  hairline: "#3A3A3E"
+  accent: "#007AFF"         # Blau - unveraendert gegenueber Hell
+  accent_text: "#F5F5F7"
+  selection: "rgba(0, 122, 255, 0.22)"
+  hover: "rgba(245, 245, 247, 0.06)"
+  success: "#30D158"        # Systemfarbe, nicht Teil der Marke
+  danger: "#FF453A"         # Systemfarbe, nicht Teil der Marke
+  overlay: "rgba(0, 0, 0, 0.55)"
+  shadow: "rgba(0, 0, 0, 0.50)"
+
+radius: 7

@@ -1,0 +1,11 @@
+node_modules
+dist
+src-tauri/target
+src-tauri/gen/schemas
+**/.DS_Store
+
+# Von scripts/sync-assets.mjs aus assets/ erzeugt
+public/fonts
+public/kuebel-mark-*.svg
+public/favicon.svg
+public/screenshots
